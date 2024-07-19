@@ -1,0 +1,31 @@
+{
+  "name": "@macawkit/base",
+  "version": "0.0.1",
+  "description": "Base classes for my projects",
+  "main": "dist/index.js",
+  "module": "dist/index.mjs",
+  "browser": "dist/index.mjs",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "clean": "rm -rf dist",
+    "prebuild": "npm run clean && tsc",
+    "build": "node build.mjs",
+    "build:tests": "npm run build test",
+    "build:release": "npm run build release",
+    "pretest": "npm run build:tests",
+    "test": "node dist/test.js"
+  },
+  "author": {
+    "name": "Yury Gubich",
+    "email": "blue@macaw.me"
+  },
+  "license": "MIT",
+  "devDependencies": {
+    "@types/node": "^20.14.11",
+    "esbuild": "^0.23.0",
+    "typescript": "^5.5.3"
+  }
+}
