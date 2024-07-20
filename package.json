@@ -1,7 +1,7 @@
 {
   "name": "@macawkit/base",
   "version": "0.0.1",
-  "description": "Base classes for my projects",
+  "description": "Base classes for MacawKit projects",
   "main": "dist/index.js",
   "module": "dist/index.mjs",
   "browser": "dist/index.mjs",

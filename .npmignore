@@ -1,5 +1,5 @@
 .gitignore
-.package-lock.json
 
-.idea
+.github/
+.idea/
 node_modules/
