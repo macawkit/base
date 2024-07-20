@@ -33,7 +33,7 @@ export default class Test {
                     ++success;
                 } else {
                     console.error(`[FAILED] ${this.name}::${routine.name}\n` +
-                        '\tgot: ' + routine.result + '\n' +
+                        '\tgot: ' + result + '\n' +
                         '\texpected: ' + routine.result
                     );
                 }
@@ -46,7 +46,7 @@ export default class Test {
         return success;
     }
 
-    static runAllTests (allSuits: Test[]): void {
+    static runAllTests (allSuits: Test[]): boolean {
         let success = 0;
         let total = 0;
         const begin = process.hrtime();
@@ -58,5 +58,7 @@ export default class Test {
         const end = process.hrtime(begin);
         const milliseconds = (end[0] * 1000) + (end[1] / 1000000);
         console.info(`Testing is done in ${milliseconds} ms, ${success} of ${total} were successful`);
+
+        return success === total;
     }
 }

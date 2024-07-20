@@ -1,6 +1,9 @@
 import Test from "./test";
 import base from "./base";
 
-Test.runAllTests([
+const result = Test.runAllTests([
     base
 ]);
+
+if (!result)
+    process.exitCode = 1;
