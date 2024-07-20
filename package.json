@@ -23,6 +23,10 @@
     "name": "Yury Gubich",
     "email": "blue@macaw.me"
   },
+  "repository": {
+    "url": "git+https://github.com/macawkit/base",
+    "type": "git"
+  },
   "license": "MIT",
   "devDependencies": {
     "@types/node": "^20.14.11",
