@@ -1,13 +1,14 @@
 {
   "name": "@macawkit/base",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Base classes for MacawKit projects",
   "main": "dist/index.js",
   "module": "dist/index.mjs",
   "browser": "dist/index.mjs",
   "types": "dist/index.d.ts",
   "files": [
-    "dist"
+    "dist",
+    "src"
   ],
   "scripts": {
     "clean": "rm -rf dist",

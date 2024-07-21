@@ -15,7 +15,8 @@ if (type === BuildType.test) {
         outfile: './dist/test.js',
         platform: 'node',
         treeShaking: true,
-        sourcemap: true
+        sourcemap: true,
+        sourcesContent: false
     });
 } else {
     const result = await esbuild.build({
@@ -26,6 +27,7 @@ if (type === BuildType.test) {
         platform: 'node',
         treeShaking: type === BuildType.release,
         sourcemap: true,
+        sourcesContent: false,
         minify: type === BuildType.release,
         metafile: true
     });
@@ -39,6 +41,7 @@ if (type === BuildType.test) {
         format: "esm",
         treeShaking: type === BuildType.release,
         sourcemap: true,
+        sourcesContent: false,
         minify: type === BuildType.release,
         outExtension: {".js": ".mjs"}
     });
