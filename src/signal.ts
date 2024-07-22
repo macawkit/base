@@ -1,10 +1,11 @@
-import Base from './base'
+import Base from './base';
 
 //todo probably move to some utility file?
 type Timeout = ReturnType<typeof setTimeout>;
 
-type Handler<T> = (message: T) => void;
-export default class Signal<T> extends Base {
+export type Handler<T = void> = (message: T) => void;
+
+export default class Signal<T = void> extends Base {
     private syncHandlers?: Handler<T>[];
     private asyncHandlers?: Handler<T>[];
     private timeout?: Timeout;
@@ -17,6 +18,8 @@ export default class Signal<T> extends Base {
     }
 
     public emit (message: T): void {
+        //todo throw exception if destroyed;
+
         if (this.syncHandlers)
             handleQueue(this.syncHandlers, message);
 
@@ -37,11 +40,36 @@ export default class Signal<T> extends Base {
         }
     }
     public unsub (handler: Handler<T>) : void {
+        let index = -1;
+        if (this.syncHandlers) {
+            index = this.syncHandlers.indexOf(handler);
+            if (index !== -1)
+                this.syncHandlers.splice(index, 1);
+
+            if (this.syncHandlers.length === 0)
+                delete this.syncHandlers;
+        }
+
+        if (index !== -1)
+            return;     //since we're unsubscribing only one - our job is done here
+
+        if (this.asyncHandlers) {
+            index = this.asyncHandlers.indexOf(handler);
+            if (index !== -1)
+                this.asyncHandlers.splice(index, 1);
+
+            if (this.asyncHandlers.length === 0)
+                delete this.asyncHandlers;
+        }
+    }
+    public unsubAll (handler: Handler<T>) : void {
         let index: number;
         if (this.syncHandlers) {
             index = this.syncHandlers.indexOf(handler);
-            while (index !== -1)
+            while (index !== -1) {
                 this.syncHandlers.splice(index, 1);
+                index = this.syncHandlers.indexOf(handler);
+            }
 
             if (this.syncHandlers.length === 0)
                 delete this.syncHandlers;
@@ -49,8 +77,10 @@ export default class Signal<T> extends Base {
 
         if (this.asyncHandlers) {
             index = this.asyncHandlers.indexOf(handler);
-            while (index !== -1)
+            while (index !== -1) {
                 this.asyncHandlers.splice(index, 1);
+                index = this.asyncHandlers.indexOf(handler);
+            }
 
             if (this.asyncHandlers.length === 0)
                 delete this.asyncHandlers;

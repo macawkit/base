@@ -17,7 +17,7 @@
     "build:tests": "npm run build test",
     "build:release": "npm run build release",
     "pretest": "npm run build:tests",
-    "test": "node dist/test.js",
+    "test": "node --test --experimental-test-coverage",
     "prepack": "npm run build:release"
   },
   "author": {

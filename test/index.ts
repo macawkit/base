@@ -1,9 +1,3 @@
-import Test from "./test";
-import base from "./base";
+import './base.test';
+import './signal.test';
 
-const result = Test.runAllTests([
-    base
-]);
-
-if (!result)
-    process.exitCode = 1;

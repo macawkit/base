@@ -8,16 +8,27 @@ const BuildType = {
 
 const type = BuildType[(process.argv[2] || '').toLocaleLowerCase()] || BuildType.debug;
 if (type === BuildType.test) {
+    // await esbuild.build({
+    //     entryPoints: ['./test/index.ts'],
+    //     bundle: true,
+    //     mainFields: ["main"],
+    //     outfile: './dist/test.js',
+    //     platform: 'node',
+    //     treeShaking: true,
+    //     sourcemap: true,
+    //     sourcesContent: false
+    // });
     await esbuild.build({
         entryPoints: ['./test/index.ts'],
         bundle: true,
         mainFields: ["main"],
-        outfile: './dist/test.js',
+        outfile: './dist/index.test.js',
         platform: 'node',
         treeShaking: true,
         sourcemap: true,
-        sourcesContent: false
+        sourcesContent: true
     });
+
 } else {
     const result = await esbuild.build({
         entryPoints: ['./src/index.ts'],
