@@ -1,9 +1,9 @@
 import Base from './base';
+import { Timeout, Handler } from "./utils";
 
-//todo probably move to some utility file?
-type Timeout = ReturnType<typeof setTimeout>;
-
-export type Handler<T = void> = (message: T) => void;
+const defaultDelay = 0;
+const defaultOrderSafe = false;
+const defaultExceptionSafe = false;
 
 export default class Signal<T = void> extends Base {
     private syncHandlers?: Handler<T>[];
@@ -18,7 +18,8 @@ export default class Signal<T = void> extends Base {
     }
 
     public emit (message: T): void {
-        //todo throw exception if destroyed;
+        if (this.destroyed)
+            throw new Error("An attempt to emit event on destroyed signal");
 
         if (this.syncHandlers)
             handleQueue(this.syncHandlers, message);
@@ -114,6 +115,9 @@ export default class Signal<T = void> extends Base {
     static set exceptionSafe (safe: boolean) {
         exceptionSafe = safe;
     }
+    static get defaultExceptionSafe (): boolean {
+        return defaultExceptionSafe;
+    }
 
     /**
      * "Order safe" means that before handling the queue of handlers
@@ -131,6 +135,9 @@ export default class Signal<T = void> extends Base {
     static set orderSafe (safe: boolean) {
         orderSafe = safe;
     }
+    static get defaultOrderSave () : boolean {
+        return defaultOrderSafe;
+    }
 
     /**
      * Changing this parameter you change an async delay before
@@ -141,6 +148,9 @@ export default class Signal<T = void> extends Base {
     }
     static set delay (newDelay : number) {
         delay = newDelay;
+    }
+    static get defaultDelay (): number {
+        return defaultDelay;
     }
 
     private scheduleAsync (message: T): void {
@@ -170,9 +180,9 @@ export default class Signal<T = void> extends Base {
     }
 }
 
-let exceptionSafe = false;
-let orderSafe = false;
-let delay = 0;
+let exceptionSafe = defaultExceptionSafe;
+let orderSafe = defaultOrderSafe;
+let delay = defaultDelay;
 
 function handleQueue<T> (handlers: Handler<T>[], message: T) : void {
     if (orderSafe)

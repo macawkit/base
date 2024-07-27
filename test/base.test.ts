@@ -4,8 +4,6 @@ import assert from "node:assert";
 
 import Base from '../src/base';
 
-class Heir extends Base {}
-
 describe('Base', t => {
     test('id', t => {
         const base = new Base();
@@ -24,6 +22,8 @@ describe('Base', t => {
     });
 
     test('className', t => {
+        class Heir extends Base {}
+
         const base = new Base();
         const heir = new Heir();
 

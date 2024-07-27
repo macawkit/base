@@ -2,7 +2,8 @@
 import { describe, test } from 'node:test';
 import assert from "node:assert";
 
-import Signal, { Handler } from '../src/signal';
+import Signal from '../src/signal';
+import { Handler, Waiter } from '../src';
 
 describe("Signal", t => {
     test("emit", t => {
@@ -21,6 +22,8 @@ describe("Signal", t => {
 
         signal.destructor();
         assert.strictEqual(signal.destroyed, true);
+
+        assert.throws(signal.emit, "An attempt to emit event on destroyed signal");
     });
 
     test("sub-unsub", t => {
@@ -90,13 +93,11 @@ describe("Signal", t => {
         let resultS = 'none';
         let resultA = 'none';
 
-        let resolve: () => void;
-        const pr = new Promise<void>(res => resolve = res);
-
+        const waiter = new Waiter();
         const fnS = t.mock.fn<Handler<string>>(value => resultS = value);
         const fnA = t.mock.fn<Handler<string>>(value => {
             resultA = value;
-            resolve();
+            waiter.done();
         });
 
         signal.sub(fnS);
@@ -110,7 +111,7 @@ describe("Signal", t => {
         assert.strictEqual(resultA, 'none');
         assert.strictEqual(fnA.mock.callCount(), 0);
 
-        await pr;
+        await waiter.promise;
 
         assert.strictEqual(resultS, 'Done');
         assert.strictEqual(fnS.mock.callCount(), 1);
@@ -130,13 +131,11 @@ describe("Signal", t => {
         let resultS = 'none';
         let resultA = 'none';
 
-        let resolve: () => void;
-        const pr = new Promise<void>(res => resolve = res);
-
+        const waiter = new Waiter();
         const fnS = t.mock.fn<Handler<string>>(value => resultS = value);
         const fnA = t.mock.fn<Handler<string>>(value => {
             resultA = value;
-            resolve();
+            waiter.done();
         });
 
         signal.sub(fnS);
@@ -152,7 +151,7 @@ describe("Signal", t => {
         assert.strictEqual(resultA, 'none');
         assert.strictEqual(fnA.mock.callCount(), 0);
 
-        await pr;
+        await waiter.promise;
 
         assert.strictEqual(resultS, 'Really-Well-Done');
         assert.strictEqual(fnS.mock.callCount(), 3);
@@ -163,7 +162,39 @@ describe("Signal", t => {
         signal.destructor();
     });
 
-    test('delay', {todo: true});
+    test('delay', async t => {
+        const signal = new Signal<number>();
+        let waiter = new Waiter();
+        let duration: number;
+
+        signal.sub(start => {
+            duration = Date.now() - start
+            waiter.done();
+        }, true);
+
+        signal.emit(Date.now());
+        await waiter.promise;
+
+        assert.equal(duration! > 0, true);      //default delay one is set to 0, but it is passed to setTimeout
+        assert.equal(duration! < 5, true);      //and some engines have default timeout delay 4 ms even if 0 is passed
+
+        Signal.delay = 20;
+        waiter = new Waiter();
+        signal.emit(Date.now());
+        await waiter.promise;
+
+        assert.equal(duration! > 19, true);
+        assert.equal(duration! < 21, true);
+
+        Signal.delay = Signal.defaultDelay;
+        waiter = new Waiter();
+        signal.emit(Date.now());
+        await waiter.promise;
+
+        assert.equal(duration! > 0, true);
+        assert.equal(duration! < 5, true);
+
+    });
     test('order::unsafe', {todo: true});
     test('order::safe', {todo: true});
     test('exception::unsafe', {todo: true});

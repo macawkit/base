@@ -1,6 +1,6 @@
 {
   "name": "@macawkit/base",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Base classes for MacawKit projects",
   "main": "dist/index.js",
   "module": "dist/index.mjs",
@@ -16,8 +16,8 @@
     "build": "node build.mjs",
     "build:tests": "npm run build test",
     "build:release": "npm run build release",
-    "pretest": "npm run build:tests",
-    "test": "node --test --experimental-test-coverage",
+    "pretest": "npm run --silent build:tests",
+    "test": "node --test --experimental-test-coverage --test-reporter=spec",
     "prepack": "npm run build:release"
   },
   "author": {
