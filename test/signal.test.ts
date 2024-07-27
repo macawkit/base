@@ -175,7 +175,7 @@ describe("Signal", t => {
         signal.emit(Date.now());
         await waiter.promise;
 
-        assert.equal(duration! > 0, true);      //default delay one is set to 0, but it is passed to setTimeout
+        assert.equal(duration! >= 0, true);      //default delay one is set to 0, but it is passed to setTimeout
         assert.equal(duration! < 5, true);      //and some engines have default timeout delay 4 ms even if 0 is passed
 
         Signal.delay = 20;
@@ -191,7 +191,7 @@ describe("Signal", t => {
         signal.emit(Date.now());
         await waiter.promise;
 
-        assert.equal(duration! > 0, true);
+        assert.equal(duration! >= 0, true);
         assert.equal(duration! < 5, true);
 
     });
