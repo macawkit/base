@@ -16,7 +16,7 @@ jobs:
           node-version: ${{ inputs.node-version }}
 
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Install project
         run: npm ci
