@@ -9,11 +9,12 @@ export default class Base {
     }
     destructor (): void {
         for (const key in this)
+            // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
             delete this[key];
 
-        this._destroyed = true
+        this._destroyed = true;
     }
-    get className() : string {
+    get className (): string {
         return this.constructor.name;
     }
     get destroyed (): boolean {

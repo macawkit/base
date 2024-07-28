@@ -1,0 +1,28 @@
+name: Cache Environment
+on:
+  workflow_call:
+    inputs:
+      node-version:
+        required: true
+        type: string
+
+jobs:
+  setup:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Use Node.js ${{ inputs.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ inputs.node-version }}
+
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Install project
+        run: npm ci
+
+      - name: Save environment
+        uses: actions/cache/save@v4
+        with:
+          path: ${{ github.workspace }}
+          key: env-${{ github.run_id }}-${{ inputs.node-version }}

@@ -1,11 +1,11 @@
 /* node:coverage disable */
 import { describe, test } from 'node:test';
-import assert from "node:assert";
+import assert from 'node:assert';
 
 import Base from '../src/base';
 
-describe('Base', t => {
-    test('id', t => {
+void describe('Base', () => {
+    void test('id', () => {
         const base = new Base();
         assert.notStrictEqual(base.id, 0);
 
@@ -13,7 +13,7 @@ describe('Base', t => {
         assert.notEqual(another.id, base.id);
     });
 
-    test('destructor', t => {
+    void test('destructor', () => {
         const base = new Base();
         base.destructor();
 
@@ -21,7 +21,7 @@ describe('Base', t => {
         assert.strictEqual(base.destroyed, true);
     });
 
-    test('className', t => {
+    void test('className', () => {
         class Heir extends Base {}
 
         const base = new Base();
@@ -30,4 +30,4 @@ describe('Base', t => {
         assert.strictEqual(base.className, 'Base');
         assert.strictEqual(heir.className, 'Heir');
     });
-})
+});

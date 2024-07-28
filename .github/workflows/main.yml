@@ -1,0 +1,15 @@
+name: Main CI
+on: [push]
+
+jobs:
+  main:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [ '18.x', '20.x', '22.x' ]
+
+    steps:
+      - name: Run checks for Node version ${{ matrix.node-version }}
+        uses: ./.github/workflows/check.yml
+        with:
+          node-version: ${{ matrix.node-version }}

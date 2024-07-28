@@ -1,5 +1,5 @@
 import Base from './base';
-import { Timeout, Handler } from "./utils";
+import { Timeout, Handler } from './utils';
 
 const defaultDelay = 0;
 const defaultOrderSafe = false;
@@ -19,7 +19,7 @@ export default class Signal<T = void> extends Base {
 
     public emit (message: T): void {
         if (this.destroyed)
-            throw new Error("An attempt to emit event on destroyed signal");
+            throw new Error('An attempt to emit event on destroyed signal');
 
         if (this.syncHandlers)
             handleQueue(this.syncHandlers, message);
@@ -28,19 +28,19 @@ export default class Signal<T = void> extends Base {
             this.scheduleAsync(message);
     }
     public sub (handler: Handler<T>, async = false): void {
-        if (async) {
+        if (async)
             if (this.asyncHandlers)
                 this.asyncHandlers.push(handler);
             else
                 this.asyncHandlers = [handler];
-        } else {
+        else
             if (this.syncHandlers)
                 this.syncHandlers.push(handler);
             else
                 this.syncHandlers = [handler];
-        }
+
     }
-    public unsub (handler: Handler<T>) : void {
+    public unsub (handler: Handler<T>): void {
         let index = -1;
         if (this.syncHandlers) {
             index = this.syncHandlers.indexOf(handler);
@@ -63,7 +63,7 @@ export default class Signal<T = void> extends Base {
                 delete this.asyncHandlers;
         }
     }
-    public unsubAll (handler: Handler<T>) : void {
+    public unsubAll (handler: Handler<T>): void {
         let index: number;
         if (this.syncHandlers) {
             index = this.syncHandlers.indexOf(handler);
@@ -126,7 +126,7 @@ export default class Signal<T = void> extends Base {
      * do not interfere with original queue.
      * This is not very expensive but since it involves additional copying
      * it is switched off by default.
-     * You might need to switch it on if your app is complex enough and
+     * You might need to switch it on if your app is complex enough, and
      * you notice that some events are lost
      * */
     static get orderSafe (): boolean {
@@ -135,7 +135,7 @@ export default class Signal<T = void> extends Base {
     static set orderSafe (safe: boolean) {
         orderSafe = safe;
     }
-    static get defaultOrderSave () : boolean {
+    static get defaultOrderSave (): boolean {
         return defaultOrderSafe;
     }
 
@@ -143,10 +143,10 @@ export default class Signal<T = void> extends Base {
      * Changing this parameter you change an async delay before
      * events are delivered to async subscribers
      * */
-    static get delay () : number {
+    static get delay (): number {
         return delay;
     }
-    static set delay (newDelay : number) {
+    static set delay (newDelay: number) {
         delay = newDelay;
     }
     static get defaultDelay (): number {
@@ -184,16 +184,15 @@ let exceptionSafe = defaultExceptionSafe;
 let orderSafe = defaultOrderSafe;
 let delay = defaultDelay;
 
-function handleQueue<T> (handlers: Handler<T>[], message: T) : void {
+function handleQueue<T> (handlers: Handler<T>[], message: T): void {
     if (orderSafe)
         handlers = handlers.slice();
 
     if (exceptionSafe)
-        for (const handler of handlers) {
+        for (const handler of handlers)
             try {
                 handler(message);
-            } catch (e) {}
-        }
+            } catch (e) { /* empty */ }
     else
         for (const handler of handlers)
             handler(message);

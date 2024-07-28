@@ -18,7 +18,8 @@
     "build:release": "npm run build release",
     "pretest": "npm run --silent build:tests",
     "test": "node --test --experimental-test-coverage --test-reporter=spec",
-    "prepack": "npm run build:release"
+    "prepack": "npm run build:release",
+    "lint": "eslint ."
   },
   "author": {
     "name": "Yury Gubich",
@@ -30,8 +31,12 @@
   },
   "license": "MIT",
   "devDependencies": {
+    "@eslint/js": "^9.8.0",
+    "@types/eslint__js": "^8.42.3",
     "@types/node": "^20.14.11",
     "esbuild": "^0.23.0",
-    "typescript": "^5.5.3"
+    "eslint": "^8.57.0",
+    "typescript": "^5.5.3",
+    "typescript-eslint": "^7.17.0"
   }
 }

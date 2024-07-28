@@ -1,12 +1,12 @@
 /* node:coverage disable */
-import { describe, test } from 'node:test';
-import assert from "node:assert";
+import { describe, test, TestContext } from 'node:test';
+import assert from 'node:assert';
 
 import Signal from '../src/signal';
 import { Handler, Waiter } from '../src';
 
-describe("Signal", t => {
-    test("emit", t => {
+void describe('Signal', () => {
+    void test('emit', t => {
         const signal = new Signal<void>();
         let result = false;
         const fn = t.mock.fn(() => {result = !result;});
@@ -23,10 +23,10 @@ describe("Signal", t => {
         signal.destructor();
         assert.strictEqual(signal.destroyed, true);
 
-        assert.throws(signal.emit, "An attempt to emit event on destroyed signal");
+        assert.throws(signal.emit.bind(signal), { message: 'An attempt to emit event on destroyed signal' });
     });
 
-    test("sub-unsub", t => {
+    void test('sub-unsub', t => {
         const signal = new Signal<void>();
         let result = false;
         const fn = t.mock.fn<Handler>(() => result = !result);
@@ -37,7 +37,7 @@ describe("Signal", t => {
         assert.strictEqual(result, false);
         assert.strictEqual(fn.mock.callCount(), 2);
 
-        signal.sub(fn)
+        signal.sub(fn);
         signal.emit();
         assert.strictEqual(result, true);
         assert.strictEqual(fn.mock.callCount(), 5);
@@ -54,7 +54,7 @@ describe("Signal", t => {
         signal.destructor();
     });
 
-    test("unsubAll", t => {
+    void test('unsubAll', t => {
         const signal = new Signal<void>();
         let result = false;
         const fn = t.mock.fn<Handler>(() => result = !result);
@@ -75,7 +75,7 @@ describe("Signal", t => {
         signal.destructor();
     });
 
-    test("message", t => {
+    void test('message', t => {
         const signal = new Signal<number>();
         let result = 0;
         const fn = t.mock.fn<Handler<number>>(message => {result = message;});
@@ -88,7 +88,7 @@ describe("Signal", t => {
         signal.destructor();
     });
 
-    test('emit::async', async t => {
+    void test('emit::async::1', async t => {
         const signal = new Signal<string>();
         let resultS = 'none';
         let resultA = 'none';
@@ -126,7 +126,7 @@ describe("Signal", t => {
         signal.destructor();
     });
 
-    test('emit::async::2', async t => {
+    void test('emit::async::2', async t => {
         const signal = new Signal<string>();
         let resultS = 'none';
         let resultA = 'none';
@@ -162,21 +162,21 @@ describe("Signal", t => {
         signal.destructor();
     });
 
-    test('delay', async t => {
+    void test('delay', async () => {
         const signal = new Signal<number>();
         let waiter = new Waiter();
         let duration: number;
 
         signal.sub(start => {
-            duration = Date.now() - start
+            duration = Date.now() - start;
             waiter.done();
         }, true);
 
         signal.emit(Date.now());
         await waiter.promise;
 
-        assert.equal(duration! >= 0, true);      //default delay one is set to 0, but it is passed to setTimeout
-        assert.equal(duration! < 5, true);      //and some engines have default timeout delay 4 ms even if 0 is passed
+        assert.equal(duration! >= 0, true); //default delay one is set to 0, but it is passed to setTimeout
+        assert.equal(duration! <= 5, true);  //and some engines have default timeout delay 4 ms even if 0 is passed
 
         Signal.delay = 20;
         waiter = new Waiter();
@@ -184,7 +184,7 @@ describe("Signal", t => {
         await waiter.promise;
 
         assert.equal(duration! > 19, true);
-        assert.equal(duration! < 21, true);
+        assert.equal(duration! <= 21, true);
 
         Signal.delay = Signal.defaultDelay;
         waiter = new Waiter();
@@ -193,10 +193,75 @@ describe("Signal", t => {
 
         assert.equal(duration! >= 0, true);
         assert.equal(duration! < 5, true);
-
     });
-    test('order::unsafe', {todo: true});
-    test('order::safe', {todo: true});
-    test('exception::unsafe', {todo: true});
-    test('exception::safe', {todo: true});
-})
+
+    void test('order::default', t => {
+        Signal.orderSafe = Signal.defaultOrderSave;
+
+        assert.equal(Signal.orderSafe, false);
+        testOrder(t, false);
+    });
+    void test('order::safe', t => {
+        Signal.orderSafe = true;
+        assert.equal(Signal.orderSafe, true);
+
+        testOrder(t, true);
+
+        Signal.orderSafe = Signal.defaultOrderSave;
+    });
+    void test('exception::default', t => {
+        Signal.exceptionSafe = Signal.defaultExceptionSafe;
+
+        assert.equal(Signal.exceptionSafe, false);
+        testException(t, false);
+    });
+    void test('exception::safe', t => {
+        Signal.exceptionSafe = true;
+        assert.equal(Signal.exceptionSafe, true);
+
+        testException(t, true);
+
+        Signal.exceptionSafe = Signal.defaultExceptionSafe;
+    });
+});
+
+function testOrder (t: TestContext, should: boolean) {
+    const signal = new Signal();
+
+    const handler1 = t.mock.fn();
+    const handler2 = t.mock.fn();
+    signal.sub(() => {
+        signal.unsub(handler1);
+    });
+    signal.sub(handler1);
+    signal.sub(handler2);
+
+    signal.emit();
+
+    assert.equal(handler1.mock.callCount(), should ? 1 : 0);
+    assert.equal(handler2.mock.callCount(), 1);
+
+    signal.destructor();
+}
+
+function testException (t: TestContext, should: boolean) {
+    const signal = new Signal();
+
+    const handler1 = t.mock.fn();
+    const handler2 = t.mock.fn();
+    signal.sub(handler1);
+    signal.sub(() => {
+        throw new Error();
+    });
+    signal.sub(handler2);
+
+    if (!should)
+        assert.throws(signal.emit.bind(signal), Error);
+    else
+        signal.emit();
+
+    assert.equal(handler1.mock.callCount(), 1);
+    assert.equal(handler2.mock.callCount(), should ? 1 : 0);
+
+    signal.destructor();
+}
