@@ -15,7 +15,7 @@ jobs:
         with:
           node-version: ${{ inputs.node-version }}
 
-      - name: Cache Workspace
+      - name: Use Workspace
         uses: actions/cache/restore@v4
         with:
           path: ${{ github.workspace }}
