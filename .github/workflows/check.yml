@@ -10,7 +10,7 @@ jobs:
   setup:
     uses: ./.github/workflows/cache-environment.yml
     with:
-      node-version: ${{ matrix.node-version }}
+      node-version: ${{ inputs.node-version }}
 
   lint:
     runs-on: ubuntu-latest
