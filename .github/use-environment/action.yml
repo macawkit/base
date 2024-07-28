@@ -1,0 +1,24 @@
+name: 'Use Environment'
+description: 'Using previously cached environment'
+inputs:
+  node-version:
+    description: 'Version of the node environment was cached for'
+    required: true
+
+runs:
+  using: "composite"
+  steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+
+    - name: Use Node.js ${{ inputs.node-version }}
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ inputs.node-version }}
+
+    - name: Use Workspace
+      uses: actions/cache/restore@v4
+      with:
+        path: ${{ github.workspace }}
+        key: env-${{ github.run_id }}-${{ inputs.node-version }}
+
