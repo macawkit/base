@@ -8,6 +8,7 @@ on:
 
 jobs:
   setup:
+    name: Set up Environment
     runs-on: ubuntu-latest
     steps:
       - name: Use Node.js ${{ inputs.node-version }}
@@ -21,7 +22,7 @@ jobs:
       - name: Install project
         run: npm ci
 
-      - name: Save environment
+      - name: Cache environment
         uses: actions/cache/save@v4
         with:
           path: ${{ github.workspace }}
