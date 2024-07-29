@@ -11,16 +11,22 @@ jobs:
     name: Set up Environment
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
       - name: Use Node.js ${{ inputs.node-version }}
         uses: actions/setup-node@v4
         with:
           node-version: ${{ inputs.node-version }}
 
-      - name: Checkout
-        uses: actions/checkout@v4
+      - name: Remove package-lock to clear out > 130 dependencies for linter
+        run: rm package-lock.json
+
+      - name: Edit package, removing everything about eslint from there
+        run: sed -i '/eslint/I d' package.json
 
       - name: Install project
-        run: npm ci
+        run: npm install
 
       - name: Cache environment
         uses: actions/cache/save@v4

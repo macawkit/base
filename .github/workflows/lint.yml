@@ -1,0 +1,20 @@
+name: Lint Project
+on:
+  workflow_call:
+
+jobs:
+  lint:
+    name: Lint Project
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Use Node.js
+        uses: actions/setup-node@v4
+
+      - name: Install Project
+        run: npm ci
+
+      - name: Run Lint Check
+        run: npm run lint
