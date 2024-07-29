@@ -16,6 +16,9 @@ runs:
     - name: Use Workspace
       uses: actions/cache/restore@v4
       with:
-        path: ${{ github.workspace }}
+        path: |
+          **/node_modules
+          package-lock.json
+          package.json
         key: env-${{ github.run_id }}-${{ inputs.node-version }}
 
