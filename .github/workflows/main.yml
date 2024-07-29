@@ -4,7 +4,7 @@ on: [push]
 jobs:
   lint:
     name: Run Lint Check
-    uses: ./github/workflows/lint.yml
+    uses: ./.github/workflows/lint.yml
 
 # it just looks nicer on the graph when you don't use matrix
 #  check:
