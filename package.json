@@ -19,8 +19,8 @@
     "pretest": "npm run --silent build:tests",
     "test": "node --test --test-reporter=spec",
     "test:coverage": "node --test --experimental-test-coverage",
-    "prepack": "npm run build:release",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "prepack": "npm run build:release"
   },
   "author": {
     "name": "Yury Gubich",
