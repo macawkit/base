@@ -1,0 +1,41 @@
+name: 'Install Brief Environment'
+description: 'Installs brief version of the project using cache'
+inputs:
+  node-version:
+    description: 'Version of the node environment was cached for'
+    required: true
+
+runs:
+  using: "composite"
+  steps:
+    - name: Use Node.js ${{ inputs.node-version }}
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ inputs.node-version }}
+
+    - name: Remove package-lock to clear out > 130 dependencies for linter
+      run: rm package-lock.json
+      shell: bash
+
+    - name: Edit package, removing everything about eslint from there
+      run: sed -i '/eslint/I d' package.json
+      shell: bash
+
+    - name: Look up node_modules from cache
+      id: cache-node-modules
+      uses: actions/cache@v4
+      with:
+        path: node_modules
+        key: env-${{ hashFiles('package-lock.json') }}
+
+    - name: Install dependencies
+      if: steps.cache-node-modules.outputs.cache-hit != 'true'
+      run: npm ci
+      shell: bash
+
+    - name: Cache node_modules
+      if: steps.cache-node-modules.outputs.cache-hit != 'true'
+      uses: actions/cache@v4
+      with:
+        path: node_modules
+        key: env-${{ hashFiles('package-lock.json') }}
