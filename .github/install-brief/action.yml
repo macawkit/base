@@ -21,6 +21,10 @@ runs:
       run: sed -i '/eslint/I d' package.json
       shell: bash
 
+    - name: Generate package-lock.json
+      run: npm install --package-lock-only
+      shell: bash
+
     - name: Look up node_modules from cache
       id: cache-node-modules
       uses: actions/cache@v4
