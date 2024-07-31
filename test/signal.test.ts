@@ -6,24 +6,55 @@ import Signal from '../src/signal';
 import { Handler, Waiter } from '../src';
 
 void describe('Signal', () => {
-    void test('emit', t => {
+    void test('emit::sync', t => {
         const signal = new Signal<void>();
         let result = false;
         const fn = t.mock.fn(() => {result = !result;});
 
         signal.sub(fn);
         signal.emit();
+
         assert.strictEqual(result, true);
         assert.strictEqual(fn.mock.callCount(), 1);
-
         assert.strictEqual(signal.syncHandlersAmount, 1);
         assert.strictEqual(signal.asyncHandlersAmount, 0);
         assert.strictEqual(signal.handlersAmount, 1);
 
         signal.destructor();
+
         assert.strictEqual(signal.destroyed, true);
 
-        assert.throws(signal.emit.bind(signal), { message: 'An attempt to emit event on destroyed signal' });
+        // I'm considering making signals NoUseAfterFree protected, but not sure yet
+        // assert.throws(signal.emit.bind(signal), UseAfterFree);
+    });
+
+    void test('emit::async', async t => {
+        const signal = new Signal<void>();
+        const waiter = new Waiter();
+        let result = false;
+        const fn = t.mock.fn(() => {
+            result = !result;
+            waiter.done();
+        });
+
+        signal.sub(fn, true);
+        signal.emit();
+
+        assert.strictEqual(signal.syncHandlersAmount, 0);
+        assert.strictEqual(signal.asyncHandlersAmount, 1);
+        assert.strictEqual(signal.handlersAmount, 1);
+
+        //a message should be delivered even after destruction;
+        signal.destructor();
+
+        assert.strictEqual(signal.destroyed, true);
+        // I'm considering making signals NoUseAfterFree protected, but not sure yet
+        // assert.throws(signal.emit.bind(signal), UseAfterFree);
+
+        await waiter.wait();
+
+        assert.strictEqual(result, true);
+        assert.strictEqual(fn.mock.callCount(), 1);
     });
 
     void test('sub-unsub', t => {
@@ -75,7 +106,7 @@ void describe('Signal', () => {
         signal.destructor();
     });
 
-    void test('message', t => {
+    void test('message::number', t => {
         const signal = new Signal<number>();
         let result = 0;
         const fn = t.mock.fn<Handler<number>>(message => {result = message;});
@@ -111,7 +142,7 @@ void describe('Signal', () => {
         assert.strictEqual(resultA, 'none');
         assert.strictEqual(fnA.mock.callCount(), 0);
 
-        await waiter.promise;
+        await waiter.wait();
 
         assert.strictEqual(resultS, 'Done');
         assert.strictEqual(fnS.mock.callCount(), 1);
@@ -151,7 +182,7 @@ void describe('Signal', () => {
         assert.strictEqual(resultA, 'none');
         assert.strictEqual(fnA.mock.callCount(), 0);
 
-        await waiter.promise;
+        await waiter.wait();
 
         assert.strictEqual(resultS, 'Really-Well-Done');
         assert.strictEqual(fnS.mock.callCount(), 3);
@@ -164,7 +195,7 @@ void describe('Signal', () => {
 
     void test('delay', async () => {
         const signal = new Signal<number>();
-        let waiter = new Waiter();
+        const waiter = new Waiter();
         let duration: number;
 
         signal.sub(start => {
@@ -173,23 +204,23 @@ void describe('Signal', () => {
         }, true);
 
         signal.emit(Date.now());
-        await waiter.promise;
+        await waiter.wait();
 
         assert.equal(duration! >= 0, true); //default delay one is set to 0, but it is passed to setTimeout
         assert.equal(duration! <= 5, true);  //and some engines have default timeout delay 4 ms even if 0 is passed
 
         Signal.delay = 20;
-        waiter = new Waiter();
+        waiter.restart();
         signal.emit(Date.now());
-        await waiter.promise;
+        await waiter.wait();
 
         assert.equal(duration! > 19, true);
         assert.equal(duration! <= 21, true);
 
         Signal.delay = Signal.defaultDelay;
-        waiter = new Waiter();
+        waiter.restart();
         signal.emit(Date.now());
-        await waiter.promise;
+        await waiter.wait();
 
         assert.equal(duration! >= 0, true);
         assert.equal(duration! < 5, true);

@@ -8,6 +8,7 @@
     "module": "ESNext",
     "isolatedDeclarations": true,
     "esModuleInterop": true,
+    "experimentalDecorators": true,
     "forceConsistentCasingInFileNames": true,
     "strict": true,
     "alwaysStrict": true,

@@ -19,6 +19,7 @@ void describe('Base', () => {
 
         assert.strictEqual(base.id, undefined);
         assert.strictEqual(base.destroyed, true);
+        assert.strictEqual(base.className, 'Base');
     });
 
     void test('className', () => {

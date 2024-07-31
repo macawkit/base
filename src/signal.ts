@@ -14,13 +14,17 @@ export default class Signal<T = void> extends Base {
     destructor (): void {
         this.cancelAsync();
 
+        //to emit scheduled events
+        if (this.asyncHandlers?.length && this.messages?.length)
+            setTimeout(fireAllMessages.bind<
+                // eslint-disable-next-line @typescript-eslint/no-invalid-void-type
+                null, [Handler<T>[], T[]], [], void
+            >(null, this.asyncHandlers, this.messages), delay);
+
         super.destructor();
     }
 
     public emit (message: T): void {
-        if (this.destroyed)
-            throw new Error('An attempt to emit event on destroyed signal');
-
         if (this.syncHandlers)
             handleQueue(this.syncHandlers, message);
 
@@ -52,7 +56,7 @@ export default class Signal<T = void> extends Base {
         }
 
         if (index !== -1)
-            return;     //since we're unsubscribing only one - our job is done here
+            return;     //since we're unsubscribing only one handler - our job is done here
 
         if (this.asyncHandlers) {
             index = this.asyncHandlers.indexOf(handler);
@@ -170,13 +174,13 @@ export default class Signal<T = void> extends Base {
     }
     private executeAsync (): void {
         delete this.timeout;
-        if (!this.messages || this.messages.length === 0)
+        if (!this.messages?.length)
             return;
 
-        if (this.asyncHandlers)
-            fireAllMessages(this.asyncHandlers, this.messages);
-
+        const messages = this.messages;
         this.messages = [];
+        if (this.asyncHandlers?.length)
+            fireAllMessages(this.asyncHandlers, messages);
     }
 }
 
