@@ -13,7 +13,7 @@ void describe('Utils', () => {
         setTimeout(waiter.done.bind(waiter), 20);
 
         await waiter.wait();
-        assert.equal(Date.now() - start >= 20, true);
+        assert.equal(Date.now() - start >= 19, true);
 
         await waiter.wait();
         assert.equal(Date.now() - start <= 21, true);

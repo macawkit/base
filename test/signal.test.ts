@@ -254,6 +254,53 @@ void describe('Signal', () => {
 
         Signal.exceptionSafe = Signal.defaultExceptionSafe;
     });
+
+    void test('once::sync::default', t => {
+        const signal = new Signal();
+
+        const order: number[] = [];
+        const h1 = t.mock.fn(() => order.push(1));
+        const h2 = t.mock.fn(() => order.push(2));
+        const h3 = t.mock.fn(() => order.push(3));
+
+        signal.sub(h1);
+        signal.once(h2);
+        signal.sub(h3);
+        signal.once(h2);
+
+        signal.emit();
+
+        assert.equal(h1.mock.callCount(), 1);
+        assert.equal(h2.mock.callCount(), 2);
+        assert.equal(h3.mock.callCount(), 1);
+        assert.deepEqual(order, [1, 2, 3, 2]);
+        assert.equal(signal.handlersAmount, 2);
+
+        order.splice(0, order.length);
+        signal.emit();
+
+        assert.equal(h1.mock.callCount(), 2);
+        assert.equal(h2.mock.callCount(), 2);
+        assert.equal(h3.mock.callCount(), 2);
+        assert.deepEqual(order, [1, 3]);
+
+        signal.once(h2);
+        signal.sub(h3);
+        signal.once(h2);
+        signal.sub(h1);
+
+        signal.unsub(h2);
+        assert.equal(signal.handlersAmount, 5);
+
+        order.splice(0, order.length);
+        signal.emit();
+
+        assert.equal(h1.mock.callCount(), 4);
+        assert.equal(h2.mock.callCount(), 3);
+        assert.equal(h3.mock.callCount(), 4);
+        assert.deepEqual(order, [1, 3, 3, 2, 1]);
+        assert.equal(signal.handlersAmount, 4);
+    });
 });
 
 function testOrder (t: TestContext, should: boolean) {
