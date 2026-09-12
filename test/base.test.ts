@@ -2,7 +2,7 @@
 import { describe, test } from 'node:test';
 import assert from 'node:assert';
 
-import Base from '../src/base';
+import Base from '../src/base.js';
 
 void describe('Base', () => {
     void test('id', () => {

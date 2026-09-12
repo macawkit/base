@@ -2,8 +2,9 @@
 import { describe, test } from 'node:test';
 import assert from 'node:assert';
 
-import { Waiter, sleep, Handler } from '../src';
-import { Base, UseAfterFree, NoUseAfterFree } from '../src';
+import { Waiter, sleep } from '../src/index.js';
+import type { Handler } from '../src/index.js';
+import { Base, UseAfterFree, noUseAfterFree, wrapNoUseAfterFree } from '../src/index.js';
 
 void describe('Utils', () => {
     void test('Waiter', async () => {
@@ -32,7 +33,7 @@ void describe('Utils', () => {
         assert.equal(Date.now() - start >= 19, true);
     });
 
-    void test('NoUseAfterFree::class', t => {
+    void test('noUseAfterFree::class', t => {
         const hs = t.mock.fn();
         const hu = t.mock.fn();
 
@@ -62,7 +63,7 @@ void describe('Utils', () => {
         heirSafe.destructor();
     });
 
-    void test('NoUseAfterFree::method', t => {
+    void test('wrapNoUseAfterFree::method', t => {
         const h = t.mock.fn();
 
         const heir = new HeirMethodSafe(h);
@@ -83,7 +84,6 @@ void describe('Utils', () => {
     });
 });
 
-@NoUseAfterFree
 class HeirSafe extends Base {
     constructor (private readonly handler: Handler) {
         super();
@@ -92,6 +92,7 @@ class HeirSafe extends Base {
         this.handler();
     }
 }
+noUseAfterFree(HeirSafe);
 
 class HeirUnsafe extends Base {
     constructor (private readonly handler: Handler) {
@@ -113,9 +114,8 @@ class HeirMethodSafe extends Base {
         if (this.handler)
             this.handler();
     }
-
-    @NoUseAfterFree
     callSafeMethod (): void {
         this.handler();
     }
 }
+wrapNoUseAfterFree(HeirMethodSafe, 'callSafeMethod');

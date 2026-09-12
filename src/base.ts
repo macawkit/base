@@ -1,4 +1,4 @@
-import { Class, Method } from './utils';
+import type { Class, Method } from './utils.js';
 
 let counter = 0;
 
@@ -34,41 +34,64 @@ export class UseAfterFree extends Error {
         this.className = className;
         this.method = method;
 
-        // Set the prototype explicitly.
         Object.setPrototypeOf(this, UseAfterFree.prototype);
     }
 }
 
-export function NoUseAfterFree<T extends Base, P extends readonly unknown[]> (Class: Class<T, P>): void;
-export function NoUseAfterFree<T extends Base> (target: T, propertyKey: string, descriptor: PropertyDescriptor): void;
-export function NoUseAfterFree<T extends Base, P extends readonly unknown[]>
-(target: Class<T, P> | T, propertyKey?: string, descriptor?: PropertyDescriptor): void {
-    if (typeof target === 'function') {
-        const propNames = Object.getOwnPropertyNames(target.prototype);
-        for (const name of propNames) {
-            if (name === 'constructor')
-                continue;
-
-            const descriptor = Object.getOwnPropertyDescriptor(target.prototype, name);
-            if (typeof descriptor?.value === 'function') {
-                const originalMethod = descriptor.value as Method<Base>;
-                descriptor.value = function (this: Base, ...args: unknown[]) {
-                    if (this.destroyed)
-                        throw new UseAfterFree(this, name);
-
-                    return originalMethod.apply(this, args);
-                };
-                Object.defineProperty(target.prototype, name, descriptor);
-            }
-
+/**
+ * Wrap a single method so it throws {@link UseAfterFree} when invoked on a destroyed instance.
+ */
+export function wrapNoUseAfterFree<T extends Base> (
+    methodName: string,
+    method: Method<T>
+): Method<T>;
+export function wrapNoUseAfterFree<T extends Base> (
+    Class: Class<T>,
+    methodName: string
+): void;
+export function wrapNoUseAfterFree<T extends Base> (
+    methodNameOrClass: string | Class<T>,
+    methodOrName: Method<T> | string
+): Method<T> | void {
+    if (typeof methodNameOrClass === 'function') {
+        const Class = methodNameOrClass;
+        const name = methodOrName as string;
+        const descriptor = Object.getOwnPropertyDescriptor(Class.prototype, name);
+        if (typeof descriptor?.value === 'function') {
+            descriptor.value = wrapNoUseAfterFree(name, descriptor.value as Method<T>);
+            Object.defineProperty(Class.prototype, name, descriptor);
         }
-    } else if (propertyKey && descriptor) {
-        const originalMethod = descriptor.value as Method<Base>;
-        descriptor.value = function (this: Base, ...args: unknown[]) {
-            if (this.destroyed)
-                throw new UseAfterFree(this, propertyKey);
-
-            return originalMethod.apply(this, args);
-        };
+        return;
     }
+
+    const methodName = methodNameOrClass;
+    const method = methodOrName as Method<T>;
+    return function (this: T, ...args: unknown[]) {
+        if (this.destroyed)
+            throw new UseAfterFree(this, methodName);
+
+        return method.apply(this, args);
+    };
+}
+
+/**
+ * Protect every own method on a class prototype from use-after-free calls.
+ * Does not affect methods inherited from parent classes.
+ */
+export function noUseAfterFree<T extends Base, P extends readonly unknown[]> (
+    Class: Class<T, P>
+): Class<T, P> {
+    const propNames = Object.getOwnPropertyNames(Class.prototype);
+    for (const name of propNames) {
+        if (name === 'constructor')
+            continue;
+
+        const descriptor = Object.getOwnPropertyDescriptor(Class.prototype, name);
+        if (typeof descriptor?.value === 'function') {
+            descriptor.value = wrapNoUseAfterFree(name, descriptor.value as Method<Base>);
+            Object.defineProperty(Class.prototype, name, descriptor);
+        }
+    }
+
+    return Class;
 }
