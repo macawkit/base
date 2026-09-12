@@ -15,8 +15,9 @@ This project provides utilities to be reused in Macaw Kit projects.
 ### Functions:
 - `sleep` - A useful function to `await` for some time.
 
-### Decorators:
-- `NoUseAfterFree` - A decorator for a class or method that protects methods from being called after `Base::destructor` has been called.
+### Use-after-free guards:
+- `noUseAfterFree` - Protects every method on a class from being called after `Base::destructor` has been called.
+- `wrapNoUseAfterFree` - Wraps a single method with the same protection.
 
 ## Usage
 
@@ -61,11 +62,29 @@ Any properties of this object should also be removed with ease.
 
 There is no check to see if any method is actually being called on a destroyed object,
 because this would have a slight performance tradeoff.
-However, you may use the `@NoUseAfterFree` decorator to address this issue.
-It works as a class decorator, protecting all methods of the current class (**not the parent class!**).
-It also works as a method decorator, in case you want to protect only specific methods.
-If any decorator-protected method is called on a destroyed object, a `UseAfterFree` error is thrown,
+However, you may use `noUseAfterFree` or `wrapNoUseAfterFree` to address this issue.
+
+`noUseAfterFree(MyClass)` protects all methods declared on the current class (**not the parent class!**).
+`wrapNoUseAfterFree(MyClass, 'methodName')` protects a single prototype method.
+`wrapNoUseAfterFree('methodName', method)` returns a wrapped function — useful for bindings assigned during construction.
+If any guarded method is called on a destroyed object, a `UseAfterFree` error is thrown,
 allowing you to address the lifecycle error that caused this situation.
+
+```typescript
+import { Base, noUseAfterFree, wrapNoUseAfterFree } from '@macawkit/base';
+
+class SafeController extends Base {
+    tick (): void {
+        // protected automatically after noUseAfterFree(SafeController)
+    }
+
+    onUpdate (): void {
+        // selectively protected below
+    }
+}
+noUseAfterFree(SafeController);
+wrapNoUseAfterFree(SafeController, 'onUpdate');
+```
 
 Base also has a `Base::id` getter, which provides a unique stable ID for every instance of `Base`.
 

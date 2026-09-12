@@ -1,5 +1,5 @@
-import Base from './base';
-import { Timeout, Handler } from './utils';
+import Base from './base.js';
+import type { Timeout, Handler } from './utils.js';
 
 const defaultDelay = 0;
 const defaultOrderSafe = false;
@@ -64,9 +64,8 @@ export default class Signal<T = void> extends Base {
         }
     }
     public unsub (handler: Handler<T>): void {
-        let index = -1;
         if (this.syncHandlers) {
-            index = this.syncHandlers.indexOf(handler);
+            const index = this.syncHandlers.indexOf(handler);
             if (index !== -1) {
                 this.syncHandlers.splice(index, 1);
 
@@ -84,7 +83,7 @@ export default class Signal<T = void> extends Base {
         }
 
         if (this.asyncHandlers) {
-            index = this.asyncHandlers.indexOf(handler);
+            const index = this.asyncHandlers.indexOf(handler);
             if (index !== -1) {
                 this.asyncHandlers.splice(index, 1);
 
@@ -205,8 +204,7 @@ export default class Signal<T = void> extends Base {
         else
             this.messages.push(message);
 
-        if (this.timeout === undefined)
-            this.timeout = setTimeout(this.executeAsync.bind(this), delay);
+        this.timeout ??= setTimeout(this.executeAsync.bind(this), delay);
     }
     private cancelAsync (): void {
         if (this.timeout === undefined)
@@ -232,13 +230,13 @@ export default class Signal<T = void> extends Base {
             }
         }
     }
-    private addSyncHandler (handler: Handler<T>) {
+    private addSyncHandler (handler: Handler<T>): void {
         if (this.syncHandlers)
             this.syncHandlers.push(handler);
         else
             this.syncHandlers = [handler];
     }
-    private addAsyncHandler (handler: Handler<T>) {
+    private addAsyncHandler (handler: Handler<T>): void {
         if (this.asyncHandlers)
             this.asyncHandlers.push(handler);
         else
@@ -258,7 +256,7 @@ function handleQueue<T> (handlers: Handler<T>[], message: T): void {
         for (const handler of handlers)
             try {
                 handler(message);
-            } catch (e) { /* empty */ }
+            } catch { /* empty */ }
     else
         for (const handler of handlers)
             handler(message);

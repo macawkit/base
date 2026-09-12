@@ -1,4 +1,3 @@
-import './base.test';
-import './signal.test';
-import './utils.test';
-
+import './base.test.js';
+import './signal.test.js';
+import './utils.test.js';

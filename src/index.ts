@@ -1,9 +1,17 @@
 export {
     default as Base,
-    NoUseAfterFree, UseAfterFree
-} from './base';
-export { default as Signal } from './signal';
+    noUseAfterFree,
+    wrapNoUseAfterFree,
+    UseAfterFree
+} from './base.js';
+export { default as Signal } from './signal.js';
 export {
-    Timeout, Handler, Class, Method,
-    Waiter, sleep
-} from './utils';
+    Waiter,
+    sleep
+} from './utils.js';
+export type {
+    Timeout,
+    Handler,
+    Class,
+    Method
+} from './utils.js';

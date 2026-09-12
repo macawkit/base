@@ -1,9 +1,8 @@
 {
   "extends": "./tsconfig.json",
-  "files": [
-    "src/index.ts",
-    "test/index.ts",
-    "eslint.config.mjs",
-    "build.mjs"
+  "include": [
+    "src/**/*.ts",
+    "test/**/*.ts",
+    "eslint.config.mjs"
   ]
 }

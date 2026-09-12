@@ -9,12 +9,12 @@ export default tslint.config(
         languageOptions: {
             parserOptions: {
                 project: 'tsconfig.all.json',
-                tsconfigDirName: import.meta.dirname
+                tsconfigRootDir: import.meta.dirname
             }
         }
     },
     {
-        ignores: ['dist/']
+        ignores: ['dist/', 'dist-test/', 'eslint.config.mjs']
     },
     {
         rules: {
@@ -39,17 +39,17 @@ export default tslint.config(
             'semi': ['error', 'always'],
             'object-curly-spacing': ['error', 'always'],
             'space-infix-ops': 'error',
-            '@typescript-eslint/type-annotation-spacing': ['error', {
-                before: false,
-                after: true,
-                overrides: {
-                    arrow: {
-                        before: true,
-                        after: true
-                    }
-                }
-            }],
             '@typescript-eslint/no-non-null-assertion': 'off'
+        }
+    },
+    {
+        files: ['test/**/*.ts'],
+        rules: {
+            '@typescript-eslint/no-unsafe-call': 'off',
+            '@typescript-eslint/no-unsafe-member-access': 'off',
+            '@typescript-eslint/no-unsafe-assignment': 'off',
+            '@typescript-eslint/no-unsafe-argument': 'off',
+            '@typescript-eslint/no-unsafe-return': 'off'
         }
     }
 );

@@ -6,13 +6,12 @@ jobs:
     name: Run Lint Check
     uses: ./.github/workflows/lint.yml
 
-# it just looks nicer on the graph when you don't use matrix
   check:
     needs: lint
     name: Run checks for Node version ${{ matrix.node-version }}
     strategy:
       matrix:
-        node-version: [ '18.x', '20.x', '22.x' ]
+        node-version: [ '22.x', '24.x' ]
 
     uses: ./.github/workflows/check.yml
     with:

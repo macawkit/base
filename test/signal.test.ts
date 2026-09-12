@@ -1,9 +1,10 @@
 /* node:coverage disable */
-import { describe, test, TestContext } from 'node:test';
+import { describe, test, type TestContext } from 'node:test';
 import assert from 'node:assert';
 
-import Signal from '../src/signal';
-import { Handler, Waiter } from '../src';
+import Signal from '../src/signal.js';
+import { Waiter } from '../src/index.js';
+import type { Handler } from '../src/index.js';
 
 void describe('Signal', () => {
     void test('emit::sync', t => {
