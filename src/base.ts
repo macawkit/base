@@ -45,12 +45,12 @@ export function wrapNoUseAfterFree<T extends Base> (
     methodName: string,
     method: Method<T>
 ): Method<T>;
-export function wrapNoUseAfterFree<T extends Base> (
-    Class: Class<T>,
+export function wrapNoUseAfterFree<T extends Base, P extends readonly unknown[]> (
+    Class: Class<T, P>,
     methodName: string
 ): void;
-export function wrapNoUseAfterFree<T extends Base> (
-    methodNameOrClass: string | Class<T>,
+export function wrapNoUseAfterFree<T extends Base, P extends readonly unknown[]> (
+    methodNameOrClass: string | Class<T, P>,
     methodOrName: Method<T> | string
 ): Method<T> | void {
     if (typeof methodNameOrClass === 'function') {

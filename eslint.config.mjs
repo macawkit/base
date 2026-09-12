@@ -14,7 +14,7 @@ export default tslint.config(
         }
     },
     {
-        ignores: ['dist/', 'eslint.config.mjs']
+        ignores: ['dist/', 'dist-test/', 'eslint.config.mjs']
     },
     {
         rules: {

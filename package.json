@@ -16,14 +16,15 @@
     "src"
   ],
   "scripts": {
-    "clean": "rm -rf dist",
+    "clean": "rm -rf dist dist-test",
     "build": "tsc -p tsconfig.build.json",
-    "prebuild": "bun run clean",
-    "pretest": "bun run build",
-    "test": "bun test",
-    "test:coverage": "bun test --coverage",
+    "prebuild": "npm run clean",
+    "build:tests": "tsc -p tsconfig.test.json",
+    "pretest": "npm run build && npm run build:tests",
+    "test": "node --test --test-reporter=spec dist-test/test",
+    "test:coverage": "node --test --experimental-test-coverage dist-test/test",
     "lint": "eslint .",
-    "prepack": "bun run build"
+    "prepack": "npm run build"
   },
   "author": {
     "name": "Yury Gubich",

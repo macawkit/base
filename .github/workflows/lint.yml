@@ -11,11 +11,13 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup Bun
-        uses: oven-sh/setup-bun@v2
+      - name: Use Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 'latest'
 
       - name: Install Project
-        run: bun install --frozen-lockfile
+        run: npm install
 
       - name: Run Lint Check
-        run: bun run lint
+        run: npm run lint
