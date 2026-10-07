@@ -7,6 +7,7 @@ This project provides utilities to be reused in Macaw Kit projects.
 ### Classes:
 - `Base` - A base class for any significant enough object to have a lifecycle.
 - `Signal` - An entity that emits messages to listeners.
+- `FSM` - A finite state machine. Transitions are signals.
 - `Waiter` - A tool to `await` some `async` callback from elsewhere.
 
 ### Errors:
@@ -14,6 +15,11 @@ This project provides utilities to be reused in Macaw Kit projects.
 
 ### Functions:
 - `sleep` - A useful function to `await` for some time.
+- `compare` - Deep equality for values, including objects, collections, and binary data.
+- `compareArray`, `compareMap`, `compareSet`, `compareObject`, `compareBinary` - The same checks when the kind of value is already known.
+- `keyExist` - Whether a `Map` or `Set` contains a deep-equal key.
+- `find` - The value stored under a deep-equal `Map` key.
+- `isRecord` - Whether a value is an object `compare` treats as a record.
 
 ### Decorators:
 - `NoUseAfterFree` - A standard decorator for a class or a method. It protects methods from being called after `Base::destructor`.
@@ -23,6 +29,7 @@ This project provides utilities to be reused in Macaw Kit projects.
 - `Handler` - Function called by `Signal` with the emitted message.
 - `Class` - Constructor type.
 - `Method` - Method type with an explicit `this`.
+- `FSMChangeEvent` - `{ from, to, event }` delivered by `FSM`.
 
 ## Usage
 
@@ -198,6 +205,50 @@ Signal.delay = 20;
 Signal.delay = Signal.defaultDelay;
 ```
 
+### FSM
+`FSM` is a small state machine. You list every state and the events that leave it.
+The machine starts in the state you name, and `dispatch` follows one edge.
+
+```typescript
+import { FSM } from '@macawkit/base';
+
+const job = new FSM([
+    ['idle', [['start', 'work']]],
+    ['work', [['step', 'work'], ['finish', 'done']]],
+    ['done', []]
+], 'idle');
+
+job.beforeChange.sub(event => {
+    // `state` is still `event.from`
+    console.log(`${event.from} -${event.event}-> ${event.to}`);
+});
+job.change.sub(event => {
+    // `state` is already `event.to`
+    console.log(job.state);
+});
+
+job.dispatch('finish'); // idle has no finish, so this does nothing
+job.dispatch('start');  // idle -> work
+job.dispatch('finish'); // work -> done
+```
+
+The graph is a list of `[state, transitions]`. Each transition is `[event, nextState]`.
+State and event names are strings, and an empty name is rejected.
+A state may appear only once, and a state may list each event only once.
+Every next state has to be declared in the graph, and the initial state has to be one of them.
+The constructor throws when any of those rules is broken.
+
+`FSM::state` is the current state.
+`FSM::dispatch` leaves the machine where it is when the current state has no transition for that event.
+`FSM::beforeChange` is emitted before the move, and `FSM::change` is emitted after it.
+Both are `Signal`s. They deliver an `FSMChangeEvent`: `{ from, to, event }`.
+
+A listener may call `dispatch` again. The new event runs after the current transition, and before the original `dispatch` returns.
+If a listener throws, the error is written to the console and the transition still happens.
+Further listeners of that same emission follow the usual `Signal` rules, so they are skipped unless `Signal.exceptionSafe` is on.
+
+`FSM` extends `Base`. `FSM::destructor` destroys `beforeChange` and `change`, then finalizes the machine.
+
 ### Waiter
 `Waiter` is a small latch. `wait` returns a promise that settles when something else calls `done`.
 `restart` arms it again, so the same waiter can be used for the next event.
@@ -223,5 +274,48 @@ import { sleep } from '@macawkit/base';
 
 await sleep(20);
 ```
+
+### compare
+`compare` checks whether two values are deeply equal.
+The same value is equal to itself. `0` and `-0` are equal, and so are two `NaN`s.
+A function or a symbol is equal only to that same value.
+Values of different types are unequal, and `null` is equal only to `null`.
+
+```typescript
+import { compare, find, keyExist } from '@macawkit/base';
+
+compare({ id: 1, tags: ['a'] }, { tags: ['a'], id: 1 }); // true
+compare(new Date(0), new Date(0)); // true
+compare(/a/gi, /a/ig); // true
+
+const rows = new Map<unknown, string>([[{ id: 1 }, 'first']]);
+
+keyExist(rows, { id: 1 }); // true
+find(rows, { id: 1 }, 'missing'); // 'first'
+find(rows, { id: 2 }, 'missing'); // 'missing'
+```
+
+Dates are compared by time. Two invalid dates are equal.
+Regular expressions are compared by source and flags. `lastIndex` stays out of the comparison.
+Arrays are compared by index, in order. Named properties on an array are left out.
+Maps and sets are compared member by member, in any order. The comparison is deep, and each member is paired only once.
+`ArrayBuffer`s, `DataView`s, and typed arrays are compared by the bytes they cover.
+An `ArrayBuffer`, a `DataView`, and a typed array stay distinct from each other even when the bytes match.
+Two typed arrays can still be equal across classes when those bytes match.
+
+Any other object is compared by constructor and by its own enumerable keys.
+Key order does not matter, and inherited properties are left out.
+Two instances of the same class can be equal.
+A class instance stays distinct from a plain object with the same fields.
+
+`compareArray`, `compareMap`, `compareSet`, `compareObject`, and `compareBinary` perform those same checks.
+Call one of them when the kind of value is already known.
+`compareBinary(a, b, fallback)` returns `fallback` when `a` is not binary.
+When `a` is binary and `b` is not, or the two values are different binary kinds, the result is `false`.
+
+`keyExist` reports whether a `Map` or a `Set` contains a deep-equal key.
+`find(map, key, fallback)` returns the value of the first deep-equal key, or `fallback` when none matches.
+`isRecord` is true for plain objects and class instances.
+It is false for `null`, arrays, dates, regular expressions, maps, sets, and binary values.
 
 For more examples and use cases, you may refer to the `test` directory.
