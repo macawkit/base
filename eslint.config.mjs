@@ -1,52 +1,59 @@
 import eslint from '@eslint/js';
-import tslint from 'typescript-eslint';
+import { defineConfig, globalIgnores } from 'eslint/config';
+import stylistic from '@stylistic/eslint-plugin';
+import tseslint from 'typescript-eslint';
 
-export default tslint.config(
+export default defineConfig(
+    globalIgnores(['dist/']),
     eslint.configs.recommended,
-    ...tslint.configs.strictTypeChecked,
-    ...tslint.configs.stylisticTypeChecked,
+    tseslint.configs.strictTypeChecked,
+    tseslint.configs.stylisticTypeChecked,
     {
         languageOptions: {
             parserOptions: {
-                project: 'tsconfig.all.json',
-                tsconfigDirName: import.meta.dirname
+                projectService: {
+                    allowDefaultProject: ['*.mjs'],
+                    defaultProject: 'tsconfig.tools.json'
+                },
+                tsconfigRootDir: import.meta.dirname
             }
-        }
-    },
-    {
-        ignores: ['dist/']
-    },
-    {
+        },
+        plugins: {
+            '@stylistic': stylistic
+        },
         rules: {
-            'quotes': ['error', 'single'],
-            'space-before-function-paren': ['error', 'always'],
-            'func-call-spacing': ['error', 'never'],
-            'space-in-parens': ['error', 'never'],
-            'comma-spacing': ['error', {
+            '@stylistic/quotes': ['error', 'single'],
+            '@stylistic/space-before-function-paren': ['error', 'always'],
+            '@stylistic/function-call-spacing': ['error', 'never'],
+            '@stylistic/space-in-parens': ['error', 'never'],
+            '@stylistic/comma-spacing': ['error', {
                 before: false,
                 after: true
             }],
-            'arrow-spacing': ['error', {
+            '@stylistic/arrow-spacing': ['error', {
                 before: true,
                 after: true
             }],
-            'keyword-spacing': ['error', {
+            '@stylistic/keyword-spacing': ['error', {
                 before: true,
                 after: true
             }],
-            'comma-dangle': ['error', 'never'],
-            'curly': ['error', 'multi'],
-            'semi': ['error', 'always'],
-            'object-curly-spacing': ['error', 'always'],
-            'space-infix-ops': 'error',
-            '@typescript-eslint/type-annotation-spacing': ['error', {
+            '@stylistic/comma-dangle': ['error', 'never'],
+            'curly': ['error', 'multi', 'consistent'],
+            '@stylistic/semi': ['error', 'always'],
+            '@stylistic/object-curly-spacing': ['error', 'always'],
+            '@stylistic/space-infix-ops': 'error',
+            '@stylistic/type-annotation-spacing': ['error', {
                 before: false,
                 after: true,
                 overrides: {
-                    arrow: {
-                        before: true,
-                        after: true
-                    }
+                    arrow: 'ignore'
+                }
+            }],
+            '@typescript-eslint/explicit-member-accessibility': ['error', {
+                accessibility: 'explicit',
+                overrides: {
+                    constructors: 'no-public'
                 }
             }],
             '@typescript-eslint/no-non-null-assertion': 'off'

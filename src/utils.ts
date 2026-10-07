@@ -1,6 +1,6 @@
 export type Timeout = ReturnType<typeof setTimeout>;
 export type Handler<T = void> = (message: T) => void;
-export type Class<T, P extends readonly unknown[] = unknown[]> = new (...args: P) => T
+export type Class<T, P extends readonly unknown[] = unknown[]> = new (...args: P) => T;
 export type Method<T> = (this: T, ...args: unknown[]) => unknown;
 
 export class Waiter {

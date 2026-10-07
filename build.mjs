@@ -8,26 +8,36 @@ const BuildType = {
     release: 2
 };
 
-// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-const type = BuildType[(process.argv[2] || '').toLocaleLowerCase()] || BuildType.debug;
-if (type === BuildType.test)
+const requested = (process.argv[2] ?? '').toLocaleLowerCase();
+let type = BuildType.debug;
+if (requested === 'test')
+    type = BuildType.test;
+else if (requested === 'release')
+    type = BuildType.release;
+
+// Node 18–22 cannot parse native decorators. esbuild leaves them in place
+// unless this feature is marked unsupported.
+const supported = { decorators: false };
+if (type === BuildType.test) {
     await esbuild.build({
         entryPoints: ['./test/index.ts'],
         bundle: true,
         mainFields: ['main'],
         outfile: './dist/index.test.js',
         platform: 'node',
+        supported,
         treeShaking: true,
         sourcemap: true,
         sourcesContent: true
     });
-else {
+} else {
     const result = await esbuild.build({
         entryPoints: ['./src/index.ts'],
         bundle: true,
         mainFields: ['main'],
         outdir: './dist',
         platform: 'node',
+        supported,
         treeShaking: type === BuildType.release,
         sourcemap: true,
         sourcesContent: false,
@@ -42,6 +52,7 @@ else {
         mainFields: ['main'],
         platform: 'node',
         format: 'esm',
+        supported,
         treeShaking: type === BuildType.release,
         sourcemap: true,
         sourcesContent: false,

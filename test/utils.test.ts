@@ -2,7 +2,7 @@
 import { describe, test } from 'node:test';
 import assert from 'node:assert';
 
-import { Waiter, sleep, Handler } from '../src';
+import { Waiter, sleep, type Handler } from '../src';
 import { Base, UseAfterFree, NoUseAfterFree } from '../src';
 
 void describe('Utils', () => {
@@ -53,10 +53,20 @@ void describe('Utils', () => {
 
         //should not throw;
         heirUnsafe.callMethod();
-        assert.throws(heirSafe.callMethod.bind(heirSafe), UseAfterFree);
+        assert.throws(heirSafe.callMethod.bind(heirSafe), (error: unknown) => {
+            assert.ok(error instanceof UseAfterFree);
+            assert.equal(error.className, 'HeirSafe');
+            assert.equal(error.method, 'callMethod');
+            assert.equal(error.message, 'HeirSafe::callMethod has been called after HeirSafe was destroyed');
+
+            return true;
+        });
 
         assert.equal(hs.mock.callCount(), 1);
         assert.equal(hu.mock.callCount(), 1);
+
+        //getters are not methods, so the class decorator does not wrap them
+        assert.equal(heirSafe.label, 'HeirSafe');
 
         //should not throw - class safety should only affect top level methods
         heirSafe.destructor();
@@ -77,7 +87,14 @@ void describe('Utils', () => {
 
         //should not throw;
         heir.callMethod();
-        assert.throws(heir.callSafeMethod.bind(heir), UseAfterFree);
+        assert.throws(heir.callSafeMethod.bind(heir), (error: unknown) => {
+            assert.ok(error instanceof UseAfterFree);
+            assert.equal(error.className, 'HeirMethodSafe');
+            assert.equal(error.method, 'callSafeMethod');
+            assert.equal(error.message, 'HeirMethodSafe::callSafeMethod has been called after HeirMethodSafe was destroyed');
+
+            return true;
+        });
 
         assert.equal(h.mock.callCount(), 1);
     });
@@ -85,19 +102,28 @@ void describe('Utils', () => {
 
 @NoUseAfterFree
 class HeirSafe extends Base {
-    constructor (private readonly handler: Handler) {
+    private readonly handler: Handler;
+
+    constructor (handler: Handler) {
         super();
+        this.handler = handler;
     }
-    callMethod (): void {
+    public get label (): string {
+        return this.className;
+    }
+    public callMethod (): void {
         this.handler();
     }
 }
 
 class HeirUnsafe extends Base {
-    constructor (private readonly handler: Handler) {
+    private readonly handler: Handler;
+
+    constructor (handler: Handler) {
         super();
+        this.handler = handler;
     }
-    callMethod (): void {
+    public callMethod (): void {
         // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
         if (this.handler)
             this.handler();
@@ -105,17 +131,20 @@ class HeirUnsafe extends Base {
 }
 
 class HeirMethodSafe extends Base {
-    constructor (private readonly handler: Handler) {
+    private readonly handler: Handler;
+
+    constructor (handler: Handler) {
         super();
+        this.handler = handler;
     }
-    callMethod (): void {
+    public callMethod (): void {
         // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
         if (this.handler)
             this.handler();
     }
 
     @NoUseAfterFree
-    callSafeMethod (): void {
+    public callSafeMethod (): void {
         this.handler();
     }
 }

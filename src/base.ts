@@ -1,4 +1,4 @@
-import { Class, Method } from './utils';
+import type { Class, Method } from './utils';
 
 let counter = 0;
 
@@ -9,24 +9,24 @@ export default class Base {
     constructor () {
         this.id = ++counter;
     }
-    destructor (): void {
+    public destructor (): void {
         for (const key in this)
             // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
             delete this[key];
 
         this._destroyed = true;
     }
-    get className (): string {
+    public get className (): string {
         return this.constructor.name;
     }
-    get destroyed (): boolean {
+    public get destroyed (): boolean {
         return this._destroyed;
     }
 }
 
 export class UseAfterFree extends Error {
     public readonly className: string;
-    readonly method: string;
+    public readonly method: string;
 
     constructor ({ className }: Base, method: string) {
         super(`${className}::${method} has been called after ${className} was destroyed`);
@@ -39,36 +39,45 @@ export class UseAfterFree extends Error {
     }
 }
 
-export function NoUseAfterFree<T extends Base, P extends readonly unknown[]> (Class: Class<T, P>): void;
-export function NoUseAfterFree<T extends Base> (target: T, propertyKey: string, descriptor: PropertyDescriptor): void;
-export function NoUseAfterFree<T extends Base, P extends readonly unknown[]>
-(target: Class<T, P> | T, propertyKey?: string, descriptor?: PropertyDescriptor): void {
-    if (typeof target === 'function') {
-        const propNames = Object.getOwnPropertyNames(target.prototype);
-        for (const name of propNames) {
-            if (name === 'constructor')
-                continue;
+function protect (method: Method<Base>, name: string): Method<Base> {
+    return function (this: Base, ...args: unknown[]) {
+        if (this.destroyed)
+            throw new UseAfterFree(this, name);
 
-            const descriptor = Object.getOwnPropertyDescriptor(target.prototype, name);
-            if (typeof descriptor?.value === 'function') {
-                const originalMethod = descriptor.value as Method<Base>;
-                descriptor.value = function (this: Base, ...args: unknown[]) {
-                    if (this.destroyed)
-                        throw new UseAfterFree(this, name);
+        return method.apply(this, args);
+    };
+}
 
-                    return originalMethod.apply(this, args);
-                };
-                Object.defineProperty(target.prototype, name, descriptor);
-            }
+function protectPrototype<T extends Base, P extends readonly unknown[]> (Class: Class<T, P>): void {
+    for (const name of Object.getOwnPropertyNames(Class.prototype)) {
+        if (name === 'constructor')
+            continue;
 
-        }
-    } else if (propertyKey && descriptor) {
-        const originalMethod = descriptor.value as Method<Base>;
-        descriptor.value = function (this: Base, ...args: unknown[]) {
-            if (this.destroyed)
-                throw new UseAfterFree(this, propertyKey);
+        const descriptor = Object.getOwnPropertyDescriptor(Class.prototype, name);
+        if (typeof descriptor?.value !== 'function')
+            continue;
 
-            return originalMethod.apply(this, args);
-        };
+        descriptor.value = protect(descriptor.value as Method<Base>, name);
+        Object.defineProperty(Class.prototype, name, descriptor);
     }
+}
+
+export function NoUseAfterFree<T extends Base, P extends readonly unknown[]> (
+    Class: Class<T, P>,
+    context: ClassDecoratorContext<Class<T, P>>
+): void;
+export function NoUseAfterFree<T extends Base> (
+    method: Method<T>,
+    context: ClassMethodDecoratorContext<T, Method<T>>
+): Method<T>;
+export function NoUseAfterFree (
+    value: Class<Base> | Method<Base>,
+    context: ClassDecoratorContext<Class<Base>> | ClassMethodDecoratorContext<Base, Method<Base>>
+): void | Method<Base> {
+    if (context.kind === 'class') {
+        protectPrototype(value as Class<Base>);
+        return;
+    }
+
+    return protect(value as Method<Base>, String(context.name));
 }

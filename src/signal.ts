@@ -1,5 +1,5 @@
 import Base from './base';
-import { Timeout, Handler } from './utils';
+import type { Timeout, Handler } from './utils';
 
 const defaultDelay = 0;
 const defaultOrderSafe = false;
@@ -13,7 +13,7 @@ export default class Signal<T = void> extends Base {
     private timeout?: Timeout;
     private messages?: T[];
 
-    destructor (): void {
+    public override destructor (): void {
         this.cancelAsync();
 
         //to emit scheduled events
@@ -30,8 +30,11 @@ export default class Signal<T = void> extends Base {
         if (this.syncHandlers) {
             handleQueue(this.syncHandlers, message);
             if (this.syncOnce) {
-                for (let i = this.syncOnce.length - 1; i >= 0; --i)
-                    this.syncHandlers.splice(this.syncOnce[i], 1);
+                for (let i = this.syncOnce.length - 1; i >= 0; --i) {
+                    const index = this.syncOnce[i];
+                    if (index !== undefined)
+                        this.syncHandlers.splice(index, 1);
+                }
 
                 delete this.syncOnce;
             }
@@ -63,10 +66,9 @@ export default class Signal<T = void> extends Base {
             this.addSyncHandler(handler);
         }
     }
-    public unsub (handler: Handler<T>): void {
-        let index = -1;
+    public unsub (handler: Handler<T>): boolean {
         if (this.syncHandlers) {
-            index = this.syncHandlers.indexOf(handler);
+            const index = this.syncHandlers.indexOf(handler);
             if (index !== -1) {
                 this.syncHandlers.splice(index, 1);
 
@@ -79,12 +81,12 @@ export default class Signal<T = void> extends Base {
                         delete this.syncOnce;
                 }
 
-                return; //since we're unsubscribing only one handler - our job is done here
+                return true; //since we're unsubscribing only one handler - our job is done here
             }
         }
 
         if (this.asyncHandlers) {
-            index = this.asyncHandlers.indexOf(handler);
+            const index = this.asyncHandlers.indexOf(handler);
             if (index !== -1) {
                 this.asyncHandlers.splice(index, 1);
 
@@ -96,11 +98,16 @@ export default class Signal<T = void> extends Base {
                     if (this.asyncOnce.length === 0)
                         delete this.asyncOnce;
                 }
+
+                return true;
             }
         }
+
+        return false;
     }
-    public unsubAll (handler: Handler<T>): void {
+    public unsubAll (handler: Handler<T>): boolean {
         let index: number;
+        let removed = false;
         if (this.syncHandlers) {
             index = this.syncHandlers.indexOf(handler);
             while (index !== -1) {
@@ -111,6 +118,7 @@ export default class Signal<T = void> extends Base {
                         delete this.syncOnce;
                 }
                 index = this.syncHandlers.indexOf(handler);
+                removed = true;
             }
 
             if (this.syncHandlers.length === 0)
@@ -127,23 +135,33 @@ export default class Signal<T = void> extends Base {
                         delete this.asyncOnce;
                 }
                 index = this.asyncHandlers.indexOf(handler);
+                removed = true;
             }
 
             if (this.asyncHandlers.length === 0)
                 delete this.asyncHandlers;
         }
+
+        return removed;
     }
-    get handlersAmount (): number {
+
+    public watch (handler: Handler<T>, async = false): () => void {
+        this.sub(handler, async);
+
+        return () => { this.unsub(handler); };
+    }
+
+    public get handlersAmount (): number {
         return this.syncHandlersAmount + this.asyncHandlersAmount;
     }
-    get syncHandlersAmount (): number {
+    public get syncHandlersAmount (): number {
         if (this.syncHandlers)
             return this.syncHandlers.length;
 
         return 0;
     }
 
-    get asyncHandlersAmount (): number {
+    public get asyncHandlersAmount (): number {
         if (this.asyncHandlers)
             return this.asyncHandlers.length;
 
@@ -152,16 +170,16 @@ export default class Signal<T = void> extends Base {
 
     /**
      * "Exception safe" means that each handler is done within try...catch block.
-     * This approach may turn of some JIT optimisations ons some environments
+     * This approach may turn of some JIT optimisations on some environments
      * and because of it is turned off by default.
      * */
-    static get exceptionSafe (): boolean {
+    public static get exceptionSafe (): boolean {
         return exceptionSafe;
     }
-    static set exceptionSafe (safe: boolean) {
+    public static set exceptionSafe (safe: boolean) {
         exceptionSafe = safe;
     }
-    static get defaultExceptionSafe (): boolean {
+    public static get defaultExceptionSafe (): boolean {
         return defaultExceptionSafe;
     }
 
@@ -175,13 +193,13 @@ export default class Signal<T = void> extends Base {
      * You might need to switch it on if your app is complex enough, and
      * you notice that some events are lost
      * */
-    static get orderSafe (): boolean {
+    public static get orderSafe (): boolean {
         return orderSafe;
     }
-    static set orderSafe (safe: boolean) {
+    public static set orderSafe (safe: boolean) {
         orderSafe = safe;
     }
-    static get defaultOrderSave (): boolean {
+    public static get defaultOrderSave (): boolean {
         return defaultOrderSafe;
     }
 
@@ -189,13 +207,13 @@ export default class Signal<T = void> extends Base {
      * Changing this parameter you change an async delay before
      * events are delivered to async subscribers
      * */
-    static get delay (): number {
+    public static get delay (): number {
         return delay;
     }
-    static set delay (newDelay: number) {
+    public static set delay (newDelay: number) {
         delay = newDelay;
     }
-    static get defaultDelay (): number {
+    public static get defaultDelay (): number {
         return defaultDelay;
     }
 
@@ -205,8 +223,7 @@ export default class Signal<T = void> extends Base {
         else
             this.messages.push(message);
 
-        if (this.timeout === undefined)
-            this.timeout = setTimeout(this.executeAsync.bind(this), delay);
+        this.timeout ??= setTimeout(this.executeAsync.bind(this), delay);
     }
     private cancelAsync (): void {
         if (this.timeout === undefined)
@@ -225,8 +242,11 @@ export default class Signal<T = void> extends Base {
             fireAllMessages(this.asyncHandlers, messages);
 
             if (this.asyncOnce) {
-                for (let i = this.asyncOnce.length - 1; i >= 0; --i)
-                    this.asyncHandlers.splice(this.asyncOnce[i], 1);
+                for (let i = this.asyncOnce.length - 1; i >= 0; --i) {
+                    const index = this.asyncOnce[i];
+                    if (index !== undefined)
+                        this.asyncHandlers.splice(index, 1);
+                }
 
                 delete this.asyncOnce;
             }
@@ -258,7 +278,7 @@ function handleQueue<T> (handlers: Handler<T>[], message: T): void {
         for (const handler of handlers)
             try {
                 handler(message);
-            } catch (e) { /* empty */ }
+            } catch { /* empty */ }
     else
         for (const handler of handlers)
             handler(message);
@@ -270,9 +290,14 @@ function fireAllMessages<T> (handlers: Handler<T>[], messages: T[]): void {
 }
 
 function updateIndices (indices: number[], index: number): void {
-    for (let i = 0; i < indices.length; ++i)
-        if (indices[i] > index)
-            indices[i]--;
-        else if (indices[i] === index)
+    for (let i = 0; i < indices.length; ++i) {
+        const current = indices[i];
+        if (current === undefined)
+            continue;
+
+        if (current > index)
+            indices[i] = current - 1;
+        else if (current === index)
             indices.splice(i--, 1);
+    }
 }

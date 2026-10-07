@@ -1,22 +1,30 @@
 {
   "compilerOptions": {
+    "noEmit": true,
     "declaration": true,
-    "emitDeclarationOnly": true,
-    "outDir": "dist",
+    "rootDir": ".",
     "moduleResolution": "bundler",
     "target": "ESNext",
     "module": "ESNext",
+    "lib": ["ESNext", "DOM"],
     "isolatedDeclarations": true,
+    "isolatedModules": true,
+    "verbatimModuleSyntax": true,
     "esModuleInterop": true,
-    "experimentalDecorators": true,
     "forceConsistentCasingInFileNames": true,
     "strict": true,
-    "alwaysStrict": true,
-    "noImplicitAny": true,
-    "strictNullChecks": true,
-    "strictBindCallApply": true,
-    "strictFunctionTypes": true,
-    "strictPropertyInitialization": true
+    "exactOptionalPropertyTypes": true,
+    "noFallthroughCasesInSwitch": true,
+    "noImplicitOverride": true,
+    "noImplicitReturns": true,
+    "noPropertyAccessFromIndexSignature": true,
+    "noUncheckedIndexedAccess": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "allowUnreachableCode": false,
+    "allowUnusedLabels": false,
+    "erasableSyntaxOnly": true,
+    "types": []
   },
-  "files": ["src/index.ts"]
+  "include": ["src"]
 }
